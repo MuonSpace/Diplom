@@ -1,0 +1,223 @@
+$(document).ready(function() {
+var php_table= '/php/table.php';
+var php_table_edit= '/update.php?type=1';
+
+var img = '/data/';
+  selector: '#Tms',
+
+  tinymce.init({
+  selector: "textarea",
+  height: 500,
+  plugins: [
+    "advlist autolink autosave link image lists charmap print preview hr anchor pagebreak",
+    "searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking",
+    "table contextmenu directionality emoticons template textcolor paste fullpage textcolor colorpicker textpattern"
+  ],
+
+  toolbar1: "newdocument fullpage | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | formatselect fontselect fontsizeselect",
+  toolbar2: "cut copy paste | searchreplace | bullist numlist | outdent indent blockquote | undo redo | link unlink anchor image media code | insertdatetime preview | forecolor backcolor",
+  toolbar3: "table | hr removeformat | subscript superscript | charmap emoticons | print  | ltr rtl | visualchars visualblocks nonbreaking template pagebreak restoredraft",
+ 
+
+  menubar: false,
+  toolbar_items_size: 'small',
+
+     
+
+});
+$("#Begin, #End").datepicker({
+		dateFormat: 'dd.mm.yy' 
+		})
+
+    var dialog = $( "#dialog-form" ).dialog({
+      autoOpen: false,
+      height: 700,
+      width: 450,
+      modal: true,
+       buttons: {
+        "Сохранить": function() {
+          var id = $("#id").val();
+          var Position = $("#Position").val();
+          var Disable = $("#Disable").val();
+          var Name = $("#Name").val();
+          var Replay = $("#Replay").val();
+          var Type = $("#Type").val();
+          var Begin = $("#Begin").val();
+          var End = $("#End").val();
+          var Delay = $("#Delay").val();
+          var Content = $("#Content").val();
+		  
+		  
+		  $.ajax({
+			url: "php/Record.php?add&id="+id+"&Position="+Position+"&Disable"+Disable+"&Name"+Name+"&Replay"+Replay+"&Type"+Type+"&Begin"+Begin+"&End"+End+"&Delay"+Delay+"&Content"+Content,
+			       success: function(data){
+				      $("#editgrid").trigger("reloadGrid");
+			                              }
+		        });
+                              },
+        
+        Cancel: function() {
+          dialog.dialog( "close" );
+                           }
+              }, 
+    });
+
+    
+
+$("#editgrid").jqGrid({
+        url: php_table +"",
+		editurl: php_table_edit+'',
+        datatype: "xml",
+        mtype: "POST",
+        regional : 'ru',
+		height:'100%',
+		width:'1200',
+        colNames: ["id","Позиция", "Состояние",'Название', "Повтор",'Тип публикации' ," Дата начала ", "Дата конца",'Время показа','Контент'],
+        colModel: [{ name: "id", width: 55, index:'id', editable: false, editopions:{readaonly:true, size:10}},
+                   { name: "Position", index:'Positions', width: 80, editable: true, editoptions:{size:10}, sortable:true},
+                   { name: "Disable", index:'Disable', width: 30,align: "center",editable: true, edittype:"checkbox", editopions:{value:"Вкл:Выкл"}},
+			             { name: "Name", index: 'Name', width: 200,editable: true,  editoptions:{size:10} },
+			             { name: "Replay", index: 'Replay', width: 70, editable: true, edittype:"select", editoptions:{value:"0:Выкл;1:Раз в день;2:Раз в месяц;3:Раз в год"}},
+                   { name: "Type", index: 'Type', width: 100, editable:true,edittype:"select", editoptions:{value:"Img:Картинка;Text:Текст"}},
+                   { name: "Begin",index: 'Begin', width: 125,editable: true, sortable:"date", formatter:'date', editoptions:{size:25, 
+                           dataInit: function (element) {
+				                    $(element).datepicker({
+					                  dateFormat: 'dd.mm.yyyy' 
+				                    	  })}},
+					                   editrules: {date: true}},
+			             { name: "End", index: 'End', width: 125,editable: true, sortable:"date", formatter:'date', editoptions:{size:25, 
+                       dataInit: function (element) {
+				               $(element).datepicker({
+					                dateFormat: 'dd.mm.yyyy' })}},
+					                editrules: {date: true}},
+			             { name: "Delay", width: 50, align: "center","search": false, stype:'text',editable: false },
+                   { name: "Content", index: 'Content', width: 125,editable: true, sortable:false, edittype:"textarea", editoptions:{size:40} }
+			
+        ],
+
+        pager: '#pagered',
+		scrollOffset:21,
+        rowNum: 100,
+        rowList: [10,20,50],
+        sortname: "Position",
+        sortorder: "asc",
+        viewrecords: true,
+        caption: "Таблица контента для монитора при входе",
+        
+    
+    }).jqGrid('navGrid','#pagered',{edit:false,add:false,del:false})
+    //кнопка добавления 
+	.navButtonAdd('#pagered', {
+  caption: "",
+  title: "Добавить запись",
+  buttonicon: "ui-icon-plusthick",
+  onClickButton: function() {
+     $("#dialog-form").dialog( "open" );
+   }})
+
+  //кнопка редактирования
+  .navButtonAdd('#pagered', {
+  caption: "",
+  title: "Изменить запись",
+  buttonicon: "ui-icon-pencil",
+  onClickButton: function() {
+	  var myGrid = $('#editgrid'),
+		selectedRowId = myGrid.jqGrid ('getGridParam', 'selrow');
+		//cellValue = myGrid.jqGrid ('getCell', selectedRowId, 'id');
+		
+
+     $.ajax({
+			url: "php/Record.php?select&id="+selectedRowId,
+			       success: function(data){
+					   console.log(data);
+					   
+				     // $("#editgrid").trigger("reloadGrid");
+					  
+			                              }
+		        });
+     $("#dialog-form").dialog( "open" );
+     
+  }})
+
+  //кнопка удаления
+  .navButtonAdd('#pagered', {
+  caption: "",
+  title: "Удалить запись",
+  buttonicon: "ui-icon-trash",
+  onClickButton: function() {
+    // $("#dialog-form-del").dialog( "open" );
+     
+  },
+
+
+  //position: "first"
+});
+
+
+	
+	 
+});
+function up(id){
+		$.ajax({
+			url: "php/Position.php?id="+id+"&up",
+			success: function(data){
+				$("#editgrid").trigger("reloadGrid");
+			}
+		});
+	};
+	
+  function down(id){
+	$.ajax({
+		url: "php/Position.php?id="+id+"&down",
+		success: function(data){
+		$("#editgrid").trigger("reloadGrid");
+		}
+	});
+  };
+
+
+//Всякий хлам 
+/*
+ //jQuery("#editgrid").jqGrid('navGrid',"#pagered",{edit:true,add:true,del:true,editSettings,addSettings,delSettings});
+     // jQuery("#editgrid").jqGrid('inlineNav',"#pagered");
+$("#editNote").click(function(){
+  var gr = jQuery("#editgrid").jqGrid('getGridParam','selrow');
+  if( gr != null ) {jQuery("#editgrid").jqGrid('editGridRow',gr,{height:340,reloadAfterSubmit:false});}
+  else {alert("Please Select Row");} 
+  });
+
+$("#addNote").click(function(){
+  jQuery("#editgrid").jqGrid('editGridRow',"new",{height:340,reloadAfterSubmit:false});
+  });
+  
+$("#delNote").click(function(){
+  var gr = jQuery("#editgrid").jqGrid('getGridParam','selrow');
+  if( gr != null ) jQuery("#editgrid").jqGrid('delGridRow',gr,{reloadAfterSubmit:false});
+  else alert("Please Select Row to delete!");
+  });
+  
+
+
+
+  var editSettings = {
+        //recreateForm: true,
+        jqModal: false,
+        reloadAfterSubmit: false,
+        closeOnEscape: true,
+        savekey: [true, 13],
+        closeAfterEdit: true,
+        onclickSubmit: editNote
+    };
+
+    var addSettings = {
+        //recreateForm: true,
+        jqModal: false,
+        reloadAfterSubmit: false,
+        savekey: [true, 13],
+        closeOnEscape: true,
+        closeAfterAdd: true,
+        onclickSubmit: addNote
+    };
+
+    var delSettings = { onclickSubmit: delNote };
+*/
